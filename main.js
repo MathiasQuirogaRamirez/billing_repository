@@ -1,5 +1,5 @@
 /*********************GLOBAL VARIABLES*************************/
-let company = null
+let myCompany;
 
 /*****************************CLASS****************************/
 
@@ -11,19 +11,13 @@ class Company {
     customers = [];
     invoices = [];
 
-    constructor (id, name, telephone, email, freelance) {
+    constructor (id, name, telephone, email, freelance, password) {
         this.id = id;
         this.name = name;
         this.telephone = telephone;
         this.email = email;
-        this.freelance = this.getFreelance (freelance); 
-    }
-
-    //Convert user response (String to Boolean)
-    getFreelance (freelance) {
-        if (freelance.toLowerCase() === "si")
-            return true;
-        return false;
+        this.freelance = freelance; 
+        this.password = password;
     }
 
     createCustomer () {
@@ -204,35 +198,184 @@ function menu () {
         }
     }
 }
+// New code ------> 
+
+/***************************************************************
+LOGIN
+****************************************************************/
+const singInResponse = (id, password) => {
+    let companies = localStorage.getItem("companies");
+    if (companies) {
+        companies = JSON.parse (companies);
+        const found = companies.find((i) => i.id === id);
+        if (found && (found.password === password)) {
+            console.log (found.name);
+            return found;
+        }
+    }
+    return false;
+};
+
+function singIn () {
+    //data from login form
+    let login_form = document.getElementById("form_login");
+    login_form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        let inputs = e.target.children;
+        let id = inputs[3].value;
+        let password = inputs[7].value;
+
+        if (myCompany = singInResponse (id, password)) {
+            alert ("Started session"); 
+        } 
+        else
+            alert ("Incorrect document or password");
+    });
+}
 
 /***************************************************************
 CREATE COMPANY
 ****************************************************************/
 function createCompany () {
-    if (company === null) {
-        const newCompany = new Company (prompt ("NIF o DNI: "), prompt ("Nombre completo o razon social: "), 
-                                    prompt ("Telefono: "), prompt ("Correo: "), prompt ("¿Eres autonomo?")); 
-        company = newCompany;         
-    } else 
-        alert ("Ya has creado la compañia");                       
+    //data from registre form
+    let registre_form = document.getElementById("form_registre");
+    registre_form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        let inputs = e.target.children;
+        //console.log (inputs[3].value);  //id
+        //console.log (inputs[7].value);  //name
+        //console.log (inputs[11].value); //email
+        //console.log (inputs[15].value); //password 1
+        //console.log (inputs[19].value); //pasword 2
+        //console.log (inputs[23].value); //telephone
+        //console.log (inputs[26].checked); //yes (freelance)
+        //console.log (inputs[29].checked); //no (freelance)
+        
+        const newCompany = new Company (inputs[3].value, inputs[11].value, 
+            inputs[27].value, inputs[15].value, inputs[26].checked, inputs[15].value); 
+
+        const error = errorCompany (newCompany, inputs[19].value);
+        if (error === "") {
+            //save in local storage
+            let companies = localStorage.getItem("companies");
+            if (companies) 
+                companies = JSON.parse (companies);
+            else 
+                companies = [];
+            companies.push (newCompany);
+            localStorage.setItem("companies", JSON.stringify(companies));
+            alert ("Company saved");
+        }
+        else
+            //error
+            alert (error);
+    });                   
+}
+
+/***************************************************************
+ERROR COMPANY
+****************************************************************/
+function errorCompany (company, password_2) {
+    let error;
+    if (companyExist (company.id))
+        error = "Company already exist";
+    else if (company.id === "")
+        error = "Empty fields";
+    else if (company.email === "")
+        error = "Empty fields";
+    else if (company.name === "")
+        error = "Empty fields";
+    else if (company.telephone === "")
+        error = "Empty fields";
+    else if (company.password !== password_2)
+        error = "The passwords are not the same";
+    // freelance is not necesary comprove because is radio button
+    else 
+        error = "";
+    return error;
 }
  
 /***************************************************************
 COMPANY EXIST
 ****************************************************************/
-// Comprove if company exist because all the data is save inside de Compañy
-function companyExist () {
-    if (company !== null)
-        return true;     
-    else 
-        alert ("Primero debes crear la compañia");
+// Comprove if company exist in local storage
+function companyExist (id) {
+    let companies = localStorage.getItem("companies");
+    if (companies) {
+        companies = JSON.parse (companies);
+        const found = companies.find((i) => i.id === id);
+        if (found)
+            return true;
+    }
     return false;
 }
 /*******************************RUN*****************************/
-menu ();
 
+//container HTML
+let container = document.getElementById("container");
 
+//HTML login
+const login = document.createElement("div");
+login.innerHTML = `
+    <form action="#" method="get" enctype="application/x-www-form-urlencoded" id="form_login">
+        <h3>Sing in</h3>
+        <label for="form_log_id">NIF or DNI:</label><br>
+        <input type="text" id="form_log_id" name="id"><br>
+        <label for="form_log_password">Password:</label><br>
+        <input type="password" id="form_log_password" name="password"><br>
+        <br><input type="submit" value="Login">
+    </form> 
+`;
 
+//HTML registre
+const registre = document.createElement("div");
+registre.innerHTML = `
+    <form action="#" method="get" enctype="application/x-www-form-urlencoded" id="form_registre">
+        <h3>Create account</h3>
+        <label for="form_reg_id">NIF or DNI:</label><br>
+        <input type="text" id="form_reg_id" name="id"><br>
+        <label for="form_reg_name">Name or Social reason:</label><br>
+        <input type="text" id="form_reg_name" name="name"><br>
+        <label for="form_reg_email">Email:</label><br>
+        <input type="email" id="form_reg_email" name="email"><br>
+        <label for="form_reg_password">Password:</label><br>
+        <input type="password" id="form_reg_password" name="password"><br>
+        <label for="form_reg_password_repeat">Repeat password:</label><br>
+        <input type="password" id="form_reg_password_repeat" name="password"><br>
+        <label for="form_reg_tel">Telephone:</label><br>
+        <input type="text" id="form_reg_tel" name="telephone"><br>
+        <p>Are you freelance ?</p>
+        <input type="radio" id="rbt_yes" name="fav_language" value="Yes">
+        <label for="rbt_yes">Yes</label><br>
+        <input type="radio" id="rbt_no" name="fav_language" value="No" checked="checked">
+        <label for="rbt_no">No</label><br>
+        <br><input type="submit" value="Registre">
+    </form> 
+`;
 
+//add to container (default)
+container.append(login);
+container.append(registre);
+registre.style.display = 'none';
+
+//buttons...
+let btn_login = document.getElementById("button_login");
+let btn_registre = document.getElementById("button_registre");
+
+let showLogin = () => {
+    login.style.display = 'block'
+    registre.style.display = 'none';
+}
+
+let showRegistre = () => {
+    registre.style.display = 'block';
+    login.style.display = 'none';
+}
+
+btn_login.addEventListener("click", showLogin);
+btn_registre.addEventListener("click", showRegistre);
+
+createCompany ();
+singIn ();
 
 
