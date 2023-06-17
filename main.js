@@ -20,12 +20,8 @@ class Company {
         this.password = password;
     }
 
-    createCustomer () {
-        const customer = new Customer (prompt ("* Cliente *\nNIF o DNI: "), prompt ("* Cliente *\nNombre completo o razon social: "),
-                              prompt ("* Cliente *\nDireccion: "));
-                              
+    addCustomer (customer) {                      
         this.customers.push(customer);
-        return customer;
     }
 
     createInvoice () {
@@ -151,55 +147,6 @@ class Item {
     }
 }
 
-/**************************FUNCTIONS****************************/
-
-/***************************************************************
-MENU
-****************************************************************/
-/*
-1) Ingresar datos de la empresa
-2) Crear factura
-3) Mostrar factura
-4) Mostrar lista de facturas
-5) Salir
-*/
-
-function menu () {
-    
-    let opcion = 1;
-
-    while (opcion !== 5) {
-       opcion = parseInt (prompt ("*** MENU ***\n\n1)Ingresar datos de la empresa\n2)Crear factura\n3)Mostrar factura\n4)Mostrar lista de facturas\n5)Salir"));
-        
-        switch (opcion) {
-            case 1:
-                createCompany ();
-                break;
-            case 2:
-                company.createInvoice ();
-                break;
-            case 3:
-                if (companyExist ())  
-                    company.searchInvoice ();
-                break;
-            case 4:
-                if (companyExist ())
-                    if (company.invoices.length > 0)
-                        alert (company.invoices.toString ());
-                    else
-                        alert ("No hay facturas");
-                break;
-            case 5:
-                opcion = 5;
-                break;
-            default:
-                alert ("Opcion incorrecta, intentelo de nuevo");
-                break;
-        }
-    }
-}
-// New code ------> 
-
 /***************************************************************
 LOGIN
 ****************************************************************/
@@ -221,12 +168,46 @@ function singIn () {
     let login_form = document.getElementById("form_login");
     login_form.addEventListener("submit", (e) => {
         e.preventDefault();
-        let inputs = e.target.children;
-        let id = inputs[3].value;
-        let password = inputs[7].value;
+        const id = document.getElementById("form_login_document").value;
+        const password = document.getElementById("form_login_password").value;
 
         if (myCompany = singInResponse (id, password)) {
-            alert ("Started session"); 
+            const page = document.createElement("div");
+            page.className="custom_container";
+            page.innerHTML = `
+            <h1 class="display-4">${myCompany.name}</h1>
+            <div class="line"></div>
+            <h3 class="font-weight-light">${myCompany.id.toUpperCase()}</h3>
+            `;
+            container.removeChild(login_registre);
+            container.append(page);
+
+            //Customer
+            container_customer.append(header_customer);
+            let btn_new_customer = document.getElementById("btn_new_customer");
+            
+            btn_new_customer.addEventListener("click", () => {
+
+                console.log(myCompany.name.toString());
+
+                container_customer.append(new_customer);
+                let btn_save_customer = document.getElementById("button_add_customer");
+                let btn_cancel_customer = document.getElementById("button_cancel_customer");
+
+                btn_save_customer.addEventListener("click", () => {
+                    let customer = new Customer (document.getElementById("customer_id").value, document.getElementById("customer_name").value,
+                    document.getElementById("customer_adress").value);
+
+                    console.log(myCompany.id.toString());
+                    myCompany.addCustomer (customer);
+                    container_customer.removeChild(new_customer);
+                });
+                /*
+                btn_cancel_customer.addEventListener("click", () => {
+                    container_customer.removeChild(new_customer);
+                });
+                */
+            });
         } 
         else
             alert ("Incorrect document or password");
@@ -238,38 +219,35 @@ CREATE COMPANY
 ****************************************************************/
 function createCompany () {
     //data from registre form
-    let registre_form = document.getElementById("form_registre");
-    registre_form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        let inputs = e.target.children;
-        //console.log (inputs[3].value);  //id
-        //console.log (inputs[7].value);  //name
-        //console.log (inputs[11].value); //email
-        //console.log (inputs[15].value); //password 1
-        //console.log (inputs[19].value); //pasword 2
-        //console.log (inputs[23].value); //telephone
-        //console.log (inputs[26].checked); //yes (freelance)
-        //console.log (inputs[29].checked); //no (freelance)
-        
-        const newCompany = new Company (inputs[3].value, inputs[11].value, 
-            inputs[27].value, inputs[15].value, inputs[26].checked, inputs[15].value); 
+    let formuario = document.getElementById("form_registre");
+    formuario.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const id = document.getElementById("form_registre_document").value;
+      const name = document.getElementById("form_registre_name").value;
+      const email = document.getElementById("form_registre_email").value;
+      const password = document.getElementById("form_registre_password").value;
+      const password_ = document.getElementById("form_registre_password_").value;
+      const telephone = document.getElementById("form_registre_tel").value;
+      const freelance = document.getElementById("rbtn_yes").checked;
+   
+    const newCompany = new Company (id, name, telephone, email, freelance, password); 
 
-        const error = errorCompany (newCompany, inputs[19].value);
-        if (error === "") {
-            //save in local storage
-            let companies = localStorage.getItem("companies");
-            if (companies) 
-                companies = JSON.parse (companies);
-            else 
-                companies = [];
-            companies.push (newCompany);
-            localStorage.setItem("companies", JSON.stringify(companies));
-            alert ("Company saved");
-        }
-        else
-            //error
-            alert (error);
-    });                   
+    const error = errorCompany (newCompany, password_);
+    if (error === "") {
+        //save in local storage
+        let companies = localStorage.getItem("companies");
+        if (companies) 
+            companies = JSON.parse (companies);
+        else 
+            companies = [];
+        companies.push (newCompany);
+        localStorage.setItem("companies", JSON.stringify(companies));
+        alert ("Company saved");
+    }
+    else
+        //error
+        alert (error);     
+    });      
 }
 
 /***************************************************************
@@ -288,7 +266,7 @@ function errorCompany (company, password_2) {
     else if (company.telephone === "")
         error = "Empty fields";
     else if (company.password !== password_2)
-        error = "The passwords are not the same";
+        error = "The passwords are not the same " + company.password + " - " + password_2;
     // freelance is not necesary comprove because is radio button
     else 
         error = "";
@@ -313,69 +291,95 @@ function companyExist (id) {
 
 //container HTML
 let container = document.getElementById("container");
+//container customer HTML
+let container_customer = document.getElementById("container_customers");
 
-//HTML login
-const login = document.createElement("div");
-login.innerHTML = `
-    <form action="#" method="get" enctype="application/x-www-form-urlencoded" id="form_login">
-        <h3>Sing in</h3>
-        <label for="form_log_id">NIF or DNI:</label><br>
-        <input type="text" id="form_log_id" name="id"><br>
-        <label for="form_log_password">Password:</label><br>
-        <input type="password" id="form_log_password" name="password"><br>
-        <br><input type="submit" value="Login">
-    </form> 
+//Login and registre HTML
+const login_registre = document.createElement("div");
+login_registre.className = "row justify-content-md-center";
+login_registre.innerHTML = `
+<div class="col-md-4 col_left">
+<!-- Login -->
+<form id="form_login">
+    <div class="form-group">
+    <input type="text" class="form-control" id="form_login_document" aria-describedby="emailHelp" placeholder="Nif or document">
+    </div>
+    <div class="form-group">
+    <input type="password" class="form-control" id="form_login_password" placeholder="Password">
+    </div>
+    <!-- Button -->
+    <button type="submit" class="btn btn-primary" id="button_login">Sing in</button>
+</form>
+</div>
+<div class="col-md-4 border border-primary col_right">
+<!-- Registre -->
+<form id="form_registre">
+    <div class="form-group">
+    <input type="text" class="form-control" id="form_registre_document" aria-describedby="emailHelp" placeholder="Nif or document">
+    </div>
+    <div class="form-group">
+        <input type="text" class="form-control" id="form_registre_name" aria-describedby="emailHelp" placeholder="Social reason or full name">
+    </div>
+    <div class="form-group">
+        <input type="email" class="form-control" id="form_registre_email" aria-describedby="emailHelp" placeholder="Enter email">
+    </div>
+    <div class="form-group">
+    <input type="password" class="form-control" id="form_registre_password" placeholder="Password">
+    </div>
+    <div class="form-group">
+        <input type="password" class="form-control" id="form_registre_password_" placeholder="Repeat password">
+    </div>
+    <div class="form-group">
+        <input type="text" class="form-control" id="form_registre_tel" aria-describedby="emailHelp" placeholder="Telephone">
+    </div>
+    <!-- Freelance question (radio buttons) -->
+    <div class="form-group">
+        <label>Are you freelance?</label>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="rbtn_yes" value="yes">
+            <label class="form-check-label" for="inlineRadio1">Yes</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="rbtn_no" value="no">
+            <label class="form-check-label" for="inlineRadio2">No</label>
+        </div>
+    </div>
+    <!-- Button -->
+    <button type="submit" class="btn btn-primary" id="button_registre">Create account</button>
+</form>
+</div>
 `;
-
-//HTML registre
-const registre = document.createElement("div");
-registre.innerHTML = `
-    <form action="#" method="get" enctype="application/x-www-form-urlencoded" id="form_registre">
-        <h3>Create account</h3>
-        <label for="form_reg_id">NIF or DNI:</label><br>
-        <input type="text" id="form_reg_id" name="id"><br>
-        <label for="form_reg_name">Name or Social reason:</label><br>
-        <input type="text" id="form_reg_name" name="name"><br>
-        <label for="form_reg_email">Email:</label><br>
-        <input type="email" id="form_reg_email" name="email"><br>
-        <label for="form_reg_password">Password:</label><br>
-        <input type="password" id="form_reg_password" name="password"><br>
-        <label for="form_reg_password_repeat">Repeat password:</label><br>
-        <input type="password" id="form_reg_password_repeat" name="password"><br>
-        <label for="form_reg_tel">Telephone:</label><br>
-        <input type="text" id="form_reg_tel" name="telephone"><br>
-        <p>Are you freelance ?</p>
-        <input type="radio" id="rbt_yes" name="fav_language" value="Yes">
-        <label for="rbt_yes">Yes</label><br>
-        <input type="radio" id="rbt_no" name="fav_language" value="No" checked="checked">
-        <label for="rbt_no">No</label><br>
-        <br><input type="submit" value="Registre">
-    </form> 
+//header container customer
+const header_customer = document.createElement("div");
+header_customer.className = "row custom_container";
+header_customer.innerHTML = `
+<h3 class="font-weight-bold">Customers</h3>    
+<img class="margin_icon" src="assets/chevron.png" height="32" alt="down icon">
+<a href="#customer_new"><img id="btn_new_customer" class="margin_icon" src="assets/add.png" height="32" alt="more icon"></a>
+`;
+//create new customer
+const new_customer = document.createElement("div");
+new_customer.innerHTML = `
+<!-- New customer -->
+<div class="row">        
+    <input type="text" class="form-control custom_container" id="customer_id" aria-describedby="emailHelp" placeholder="Document">
+    <input type="text" class="form-control custom_container" id="customer_name" aria-describedby="emailHelp" placeholder="Name">
+    <input type="text" class="form-control custom_container" id="customer_adress" aria-describedby="emailHelp" placeholder="Adress">
+</div>
+<!-- Button -->
+<div class="d-flex flex-row-reverse">
+    <button type="submit" class="btn btn-primary margin_icon" id="button_add_customer">Save</button>
+    <button type="cancel" class="btn btn-outline-primary" id="button_cancel_customer">Cancel</button>
+</div>
 `;
 
 //add to container (default)
-container.append(login);
-container.append(registre);
-registre.style.display = 'none';
+container.append(login_registre);
+document.getElementById("rbtn_yes").checked = true;
 
 //buttons...
 let btn_login = document.getElementById("button_login");
 let btn_registre = document.getElementById("button_registre");
 
-let showLogin = () => {
-    login.style.display = 'block'
-    registre.style.display = 'none';
-}
-
-let showRegistre = () => {
-    registre.style.display = 'block';
-    login.style.display = 'none';
-}
-
-btn_login.addEventListener("click", showLogin);
-btn_registre.addEventListener("click", showRegistre);
-
-createCompany ();
-singIn ();
-
-
+btn_login.addEventListener("click", singIn());
+btn_registre.addEventListener("click", createCompany());
