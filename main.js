@@ -1,5 +1,6 @@
 /*********************GLOBAL VARIABLES*************************/
 let myCompany;
+let last_list_customers;
 
 /*****************************CLASS****************************/
 
@@ -20,8 +21,17 @@ class Company {
         this.password = password;
     }
 
-    addCustomer (customer) {                      
+    addCustomer(customer) {  
+        if (this.customers === null) {
+            this.customers = [];
+        }                    
         this.customers.push(customer);
+        console.log(this.customers.toString());
+    }
+
+    deleteCustomer(customer) {
+        this.customers.remove(customer);
+        console.log(this.customers.toString());
     }
 
     createInvoice () {
@@ -80,6 +90,10 @@ class Company {
             alert (found.toString ());
         else
             alert ("La factura con numero: " + id + " no existe");
+    }
+
+    toString () { 
+        return ("Company\nDocumento: " + this.id + "\nNombre: " + this.name + "\n" + this.customers.toString() + "\n");
     }
 }
 
@@ -150,14 +164,41 @@ class Item {
 /***************************************************************
 LOGIN
 ****************************************************************/
+function createCustomer () {
+    container_customer.append(new_customer);
+    let btn_save_customer = document.getElementById("button_add_customer");
+    let btn_cancel_customer = document.getElementById("button_cancel_customer");
+
+    btn_save_customer.addEventListener("click", () => {
+        let customer = new Customer (document.getElementById("customer_id").value, document.getElementById("customer_name").value,
+        document.getElementById("customer_adress").value);
+        myCompany.addCustomer(customer);
+        print_customers('null', customer);
+        reloadCompany();
+        container_customer.removeChild(new_customer);
+    });
+
+    btn_cancel_customer.addEventListener("click", () => {
+        container_customer.removeChild(new_customer);
+     });
+}
+
 const singInResponse = (id, password) => {
     let companies = localStorage.getItem("companies");
     if (companies) {
         companies = JSON.parse (companies);
         const found = companies.find((i) => i.id === id);
         if (found && (found.password === password)) {
-            console.log (found.name);
-            return found;
+            const company = new Company();
+            company.id = found.id;
+            company.name = found.name;
+            company.telephone = found.telephone;
+            company.email = found.email;
+            company.password = found.password;
+            company.freelance = found.freelance;
+            company.customers = get_customers(company.id);
+            company.invoices = found.invoices;
+            return company;
         }
     }
     return false;
@@ -170,8 +211,9 @@ function singIn () {
         e.preventDefault();
         const id = document.getElementById("form_login_document").value;
         const password = document.getElementById("form_login_password").value;
+        myCompany = singInResponse (id, password);
 
-        if (myCompany = singInResponse (id, password)) {
+        if (myCompany) {
             const page = document.createElement("div");
             page.className="custom_container";
             page.innerHTML = `
@@ -184,32 +226,29 @@ function singIn () {
 
             //Customer
             container_customer.append(header_customer);
+            container_customer.append(container_customer_list);
+            //print customer list in HTML
+            print_customers(myCompany.customers, 'null');
             let btn_new_customer = document.getElementById("btn_new_customer");
+            let btn_list_customer = document.getElementById("btn_list_customer");
             
             btn_new_customer.addEventListener("click", () => {
-
-                console.log(myCompany.name.toString());
-
-                container_customer.append(new_customer);
-                let btn_save_customer = document.getElementById("button_add_customer");
-                let btn_cancel_customer = document.getElementById("button_cancel_customer");
-
-                btn_save_customer.addEventListener("click", () => {
-                    let customer = new Customer (document.getElementById("customer_id").value, document.getElementById("customer_name").value,
-                    document.getElementById("customer_adress").value);
-
-                    console.log(myCompany.id.toString());
-                    myCompany.addCustomer (customer);
-                    container_customer.removeChild(new_customer);
-                });
-                /*
-                btn_cancel_customer.addEventListener("click", () => {
-                    container_customer.removeChild(new_customer);
-                });
-                */
+                container_customer.removeChild(container_customer_list);
+                createCustomer();
+                container_customer.append(container_customer_list);
             });
-        } 
-        else
+            
+            btn_list_customer.addEventListener("click", () => {
+                if (btn_list_customer.getAttribute('src') === 'assets/chevron_up.png') {
+                  btn_list_customer.src="assets/chevron.png";
+                  container_customer.removeChild(container_customer_list);
+                } else {
+                    btn_list_customer.src="assets/chevron_up.png";
+                    container_customer.append(container_customer_list);
+                }
+            });
+
+        } else
             alert ("Incorrect document or password");
     });
 }
@@ -248,6 +287,102 @@ function createCompany () {
         //error
         alert (error);     
     });      
+}
+
+//save list (customers) in storage
+const set_customers = (customers) => {
+    localStorage.setItem(`${myCompany.id}_customers`, JSON.stringify(customers));
+};
+//get list (customers) from storage
+const get_customers = (id) => {
+    let customers = localStorage.getItem(`${id}_customers`);
+    customers = JSON.parse (customers);
+    return customers;
+};
+
+//print customers HTML
+const print_customers = (customers, customer) => {
+
+    if(customer === 'null') {
+        console.log("entra null (lista)");
+        if(customers !== null) {
+            customers.forEach(item => {
+                const list = document.createElement("div");
+                list.className = "row border-bottom border-primary";
+                list.innerHTML = `
+                <img src="assets/customer.png" alt="customer icon">
+                
+                <div class="col-md-5 d-flex align-items-center">
+                    <div>
+                        <h6>${item.name}</h6>
+                        <h6>${item.id}</h6>
+                    </div>
+                </div>
+                <div class="col-md-5 d-flex align-items-center">
+                    <h6>${item.adress}</h6>
+                </div>
+                <div class="d-flex align-items-center">
+                    <img id="${item.id}" src="assets/delete.png" height="32" alt="delete icon">
+                </div>
+                `;
+                container_customer_list.append(list);
+                console.log(item.id);
+                let btn_delete = document.getElementById(item.id);
+                btn_delete.addEventListener("click", () => {
+                    container_customer_list.removeChild(list);
+                    let  customers_copy = myCompany.customers;
+                    const found = customers_copy.find((i) => i.id === item.id);
+                    customers_copy = customers_copy.splice(customers_copy.indexOf(found), 1);
+                    set_customers(customers);
+                });
+            });
+        }
+    } else {
+        console.log("entra add");
+        const list = document.createElement("div");
+        list.className = "row border-bottom border-primary";
+        list.innerHTML = `
+        <img src="assets/customer.png" alt="customer icon">
+        
+        <div class="col-md-5 d-flex align-items-center">
+            <div>
+                <h6>${customer.name}</h6>
+                <h6>${customer.id}</h6>
+            </div>
+        </div>
+        <div class="col-md-5 d-flex align-items-center">
+            <h6>${customer.adress}</h6>
+        </div>
+        <div class="d-flex align-items-center">
+            <img id="${customer.id}" src="assets/delete.png" height="32" alt="delete icon">
+        </div>
+        `;
+        container_customer_list.append(list);
+        console.log(customer.id);
+        let btn_delete = document.getElementById(customer.id);
+            btn_delete.addEventListener("click", () => {
+                container_customer_list.removeChild(list);
+                let customers_copy = myCompany.customers;
+                const found = customers_copy.find((i) => i.id === customer.id);
+                customers_copy = customers_copy.splice(customers_copy.indexOf(found), 1);
+                set_customers(customers_copy);
+        });
+    }
+};
+
+function reloadCompany() {
+    let companies = localStorage.getItem("companies");
+    if (companies) {
+        companies = JSON.parse (companies);
+        const found = companies.find((i) => i.id === myCompany.id);
+        companies = companies.splice(companies.indexOf(found), 1);
+    }
+    else 
+        companies = [];
+
+    set_customers(myCompany.customers);
+    companies.push(myCompany);   
+    localStorage.setItem("companies", JSON.stringify(companies));
 }
 
 /***************************************************************
@@ -293,6 +428,7 @@ function companyExist (id) {
 let container = document.getElementById("container");
 //container customer HTML
 let container_customer = document.getElementById("container_customers");
+let container_customer_list = document.getElementById("container_customers_list");
 
 //Login and registre HTML
 const login_registre = document.createElement("div");
@@ -354,7 +490,7 @@ const header_customer = document.createElement("div");
 header_customer.className = "row custom_container";
 header_customer.innerHTML = `
 <h3 class="font-weight-bold">Customers</h3>    
-<img class="margin_icon" src="assets/chevron.png" height="32" alt="down icon">
+<img id="btn_list_customer" class="margin_icon" src="assets/chevron_up.png" height="32" alt="down icon">
 <a href="#customer_new"><img id="btn_new_customer" class="margin_icon" src="assets/add.png" height="32" alt="more icon"></a>
 `;
 //create new customer
@@ -383,3 +519,4 @@ let btn_registre = document.getElementById("button_registre");
 
 btn_login.addEventListener("click", singIn());
 btn_registre.addEventListener("click", createCompany());
+//localStorage.clear();
