@@ -20,31 +20,41 @@
         </a>
     </nav>
 
-    <div id="container" class="custom_container"></div>
+    <!-- New invoice (in progress) 
+    <div class="container">
+        <h5>Invoice data</h5>
+        <div class="row">        
+            <input type="text" class="form-control custom_container col-md-5" id="invoice_id" aria-describedby="emailHelp" placeholder="Number">
+            <input type="text" class="form-control custom_container col-md-5" id="invoice_date" aria-describedby="emailHelp" placeholder="Date">
+        </div>
 
-    <div id="container_customers" class="container">
-        <div id="container_customers_list"></div>
-    </div>
-        
-        <!-- Customer list 
-        <div class="row border-bottom border-primary">
-            <img src="assets/customer.png" alt="customer icon">
-            
-            <div class="col-md-5 d-flex align-items-center">
-                <div>
-                    <h6>Name</h6>
-                    <h6>Document</h6>
-                </div>
-            </div>
-            <div class="col-md-5 d-flex align-items-center">
-                <h6>Adress</h6>
-            </div>
-            <div class="d-flex align-items-center">
-                <img src="assets/delete.png" height="32" alt="delete icon">
+        <div class="row">
+                <input class="form-control custom_container col-md-5" id="invoice_customer" type="search" placeholder="Customer name" aria-label="Search">
+                <input class="form-control custom_container col-md-5" id="invoice_customer_found" readonly>
+        </div>
+
+        <h5>Products or services</h5>
+        <div class="row">
+            <input type="text" class="form-control custom_container col-md-5" id="item_name_invoice" aria-describedby="emailHelp" placeholder="Name">
+            <input type="text" class="form-control custom_container col-md-5" id="item_description_invoice" aria-describedby="emailHelp" placeholder="Description">
+        </div>
+        <div class="row">
+            <input type="text" class="form-control custom_container col-md-1" id="item_quantity_invoice" aria-describedby="emailHelp" placeholder="Quantity">
+            <input type="text" class="form-control custom_container col-md-2" id="item_base_invoice" aria-describedby="emailHelp" placeholder="Base">
+            <input type="text" class="form-control custom_container col-md-1" id="item_iva_invoice" aria-describedby="emailHelp" placeholder="IVA">
+            <div class="d-flex align-items-center col-md-1">
+                <img id="btn_new_item" src="assets/check.png" height="32" alt="more icon">
             </div>
         </div>
-        -->
 
+        <div class="row">
+            <button type="cancel" class="btn btn-outline-primary custom_container" id="button_cancel_invoive">Cancel</button>
+            <button type="submit" class="btn btn-primary custom_container" id="button_add_invoice">Save</button>
+        </div>
+    </div> -->
+    
+    <div id="container" class="custom_container"></div>
+        
     <script src="main.js"></script>
     <!-- bootstrap -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" 

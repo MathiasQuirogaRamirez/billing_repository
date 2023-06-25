@@ -1,8 +1,18 @@
-/*********************GLOBAL VARIABLES*************************/
+/*********************
+GLOBAL VARIABLES     *            
+**********************/
 let myCompany;
 let last_list_customers;
+//container customer HTML
+let container_customer;
+let container_customer_list;
+//container invoices HTML
+let container_invoices;
+let container_invoices_list;
 
-/*****************************CLASS****************************/
+/*********************
+CLASES               *            
+**********************/
 
 /***************************************************************
 COMPANY CLASS
@@ -161,28 +171,13 @@ class Item {
     }
 }
 
+/*********************
+FUNCTIONS            *            
+**********************/
+
 /***************************************************************
 LOGIN
 ****************************************************************/
-function createCustomer () {
-    container_customer.append(new_customer);
-    let btn_save_customer = document.getElementById("button_add_customer");
-    let btn_cancel_customer = document.getElementById("button_cancel_customer");
-
-    btn_save_customer.addEventListener("click", () => {
-        let customer = new Customer (document.getElementById("customer_id").value, document.getElementById("customer_name").value,
-        document.getElementById("customer_adress").value);
-        myCompany.addCustomer(customer);
-        print_customers('null', customer);
-        reloadCompany();
-        container_customer.removeChild(new_customer);
-    });
-
-    btn_cancel_customer.addEventListener("click", () => {
-        container_customer.removeChild(new_customer);
-     });
-}
-
 const singInResponse = (id, password) => {
     let companies = localStorage.getItem("companies");
     if (companies) {
@@ -220,11 +215,40 @@ function singIn () {
             <h1 class="display-4">${myCompany.name}</h1>
             <div class="line"></div>
             <h3 class="font-weight-light">${myCompany.id.toUpperCase()}</h3>
+
+            <!-- Horizontal nav tab -->
+            <ul class="nav nav-tabs container" id="myTab" role="tablist">
+                <li class="nav-item">
+                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#invoice_panel" role="tab" aria-controls="home" aria-selected="true">Invoices</a>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#customer_panel" role="tab" aria-controls="profile" aria-selected="false">Customers</a>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="invoice_panel" role="tabpanel" aria-labelledby="home-tab">
+                    <div id="container_invoices" class="container">
+                        <div id="container_invoices_list"></div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="customer_panel" role="tabpanel" aria-labelledby="profile-tab">
+                    <div id="container_customers" class="container">
+                        <div id="container_customers_list"></div>
+                    </div>
+                </div>
+            </div>
             `;
             container.removeChild(login_registre);
             container.append(page);
 
-            //Customer
+            //container customer HTML
+            container_customer = document.getElementById("container_customers");
+            container_customer_list = document.getElementById("container_customers_list");
+            //container invoices HTML
+            container_invoices = document.getElementById("container_invoices");
+            container_invoices_list = document.getElementById("container_invoices_list");
+
+            //customers
             container_customer.append(header_customer);
             container_customer.append(container_customer_list);
             //print customer list in HTML
@@ -247,6 +271,10 @@ function singIn () {
                     container_customer.append(container_customer_list);
                 }
             });
+
+            //invoices
+            container_invoices.append(header_invoice);
+            container_invoices.append(container_invoices_list);
 
         } else
             alert ("Incorrect document or password");
@@ -289,18 +317,47 @@ function createCompany () {
     });      
 }
 
-//save list (customers) in storage
+/***************************************************************
+CREATE CUSTOMER
+****************************************************************/
+function createCustomer () {
+    container_customer.append(new_customer);
+    let btn_save_customer = document.getElementById("button_add_customer");
+    let btn_cancel_customer = document.getElementById("button_cancel_customer");
+
+    btn_save_customer.addEventListener("click", () => {
+        let customer = new Customer (document.getElementById("customer_id").value, document.getElementById("customer_name").value,
+        document.getElementById("customer_adress").value);
+        myCompany.addCustomer(customer);
+        print_customers('null', customer);
+        reloadCompany();
+        container_customer.removeChild(new_customer);
+    });
+
+    btn_cancel_customer.addEventListener("click", () => {
+        container_customer.removeChild(new_customer);
+    });
+}
+
+/***************************************************************
+SAVE LIST CUSTOMERS IN STORAGE
+****************************************************************/
 const set_customers = (customers) => {
     localStorage.setItem(`${myCompany.id}_customers`, JSON.stringify(customers));
 };
-//get list (customers) from storage
+
+/***************************************************************
+GET LIST CUSTOMERS FROM STORAGE
+****************************************************************/
 const get_customers = (id) => {
     let customers = localStorage.getItem(`${id}_customers`);
     customers = JSON.parse (customers);
     return customers;
 };
 
-//print customers HTML
+/***************************************************************
+CUSTOMER ADD / CUSTOMER LIST (HTML)
+****************************************************************/
 const print_customers = (customers, customer) => {
 
     if(customer === 'null') {
@@ -370,6 +427,81 @@ const print_customers = (customers, customer) => {
     }
 };
 
+/***************************************************************
+INVOICE ADD / INVOICE LIST (HTML)
+****************************************************************/
+const print_invoices = (invoices, invoice) => {
+
+    if(invoices === 'null') {
+        console.log("entra null (lista)");
+        if(invoices !== null) {
+            invoices.forEach(item => {
+                const list = document.createElement("div");
+                list.className = "row border-bottom border-primary";
+                list.innerHTML = `
+                <img src="assets/invoice.png" alt="invoice icon">
+                
+                <div class="col-md-5 d-flex align-items-center">
+                    <div>
+                        <h6>${item.id}</h6>
+                        <h6>${item.date}</h6>
+                    </div>
+                </div>
+                <div class="col-md-5 d-flex align-items-center">
+                    <h6>${item.customer.name}</h6>
+                </div>
+                <div class="d-flex align-items-center">
+                    <img id="${item.id}" src="assets/delete.png" height="32" alt="delete icon">
+                </div>
+                `;
+                container_invoices_list.append(list);
+                console.log(item.id);
+                let btn_delete = document.getElementById(item.id);
+                btn_delete.addEventListener("click", () => {
+                    container_invoices_list.removeChild(list);
+                    let  invoices_copy = myCompany.invoices;
+                    const found = invoices_copy.find((i) => i.id === item.id);
+                    invoices_copy = invoices_copy.splice(invoices_copy.indexOf(found), 1);
+                    //set_customers(customers);
+                });
+            });
+        }
+    } else {
+        console.log("entra add");
+        const list = document.createElement("div");
+        list.className = "row border-bottom border-primary";
+        list.innerHTML = `
+        <img src="assets/customer.png" alt="customer icon">
+        
+        <div class="col-md-5 d-flex align-items-center">
+            <div>
+                <h6>${invoice.id}</h6>
+                <h6>${invoice.date}</h6>
+            </div>
+        </div>
+        <div class="col-md-5 d-flex align-items-center">
+            <h6>${invoice.customer.name}</h6>
+        </div>
+        <div class="d-flex align-items-center">
+            <img id="${invoice.id}" src="assets/delete.png" height="32" alt="delete icon">
+        </div>
+        `;
+        container_invoices_list.append(list);
+        console.log(invoice.id);
+        let btn_delete = document.getElementById(invoice.id);
+            btn_delete.addEventListener("click", () => {
+                container_invoices_list.removeChild(list);
+                let invoices_copy = myCompany.invoices;
+                const found = invoices_copy.find((i) => i.id === invoice.id);
+                invoices_copy = invoices_copy.splice(invoices_copy.indexOf(found), 1);
+                //set_customers(customers_copy);
+        });
+    }
+};
+
+/***************************************************************
+RELOAD COMPANY IN STORAGE
+****************************************************************/
 function reloadCompany() {
     let companies = localStorage.getItem("companies");
     if (companies) {
@@ -409,9 +541,8 @@ function errorCompany (company, password_2) {
 }
  
 /***************************************************************
-COMPANY EXIST
+ ERROR COMPANY EXIST
 ****************************************************************/
-// Comprove if company exist in local storage
 function companyExist (id) {
     let companies = localStorage.getItem("companies");
     if (companies) {
@@ -422,15 +553,21 @@ function companyExist (id) {
     }
     return false;
 }
-/*******************************RUN*****************************/
+
+/*********************
+RUN PROGRAM          *            
+**********************/
 
 //container HTML
 let container = document.getElementById("container");
-//container customer HTML
-let container_customer = document.getElementById("container_customers");
-let container_customer_list = document.getElementById("container_customers_list");
+/*//container customer HTML
+container_customer = document.getElementById("container_customers");
+container_customer_list = document.getElementById("container_customers_list");
+//container invoices HTML
+container_invoices = document.getElementById("container_invoices");
+container_invoices_list = document.getElementById("container_invoices_list");*/
 
-//Login and registre HTML
+//login and registre HTML
 const login_registre = document.createElement("div");
 login_registre.className = "row justify-content-md-center";
 login_registre.innerHTML = `
@@ -485,14 +622,25 @@ login_registre.innerHTML = `
 </form>
 </div>
 `;
-//header container customer
+
+//header customer
 const header_customer = document.createElement("div");
 header_customer.className = "row custom_container";
 header_customer.innerHTML = `
-<h3 class="font-weight-bold">Customers</h3>    
+<h3 class="font-weight-bold">Client list</h3>    
 <img id="btn_list_customer" class="margin_icon" src="assets/chevron_up.png" height="32" alt="down icon">
-<a href="#customer_new"><img id="btn_new_customer" class="margin_icon" src="assets/add.png" height="32" alt="more icon"></a>
+<img id="btn_new_customer" class="margin_icon" src="assets/add.png" height="32" alt="more icon">
 `;
+
+//header invoice
+const header_invoice = document.createElement("div");
+header_invoice.className = "row custom_container";
+header_invoice.innerHTML = `
+<h3 class="font-weight-bold">Bill list</h3>    
+<img id="btn_list_invoice" class="margin_icon" src="assets/chevron_up.png" height="32" alt="down icon">
+<img id="btn_new_invoice" class="margin_icon" src="assets/add.png" height="32" alt="more icon">
+`;
+
 //create new customer
 const new_customer = document.createElement("div");
 new_customer.innerHTML = `
@@ -508,6 +656,8 @@ new_customer.innerHTML = `
     <button type="cancel" class="btn btn-outline-primary" id="button_cancel_customer">Cancel</button>
 </div>
 `;
+
+
 
 //add to container (default)
 container.append(login_registre);
