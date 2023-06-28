@@ -31,3 +31,12 @@
 .margin_icon {
     margin-left: 1rem;
 }
+
+.padding_list {
+    padding-bottom: 0.5rem;
+    padding-top: 0.5rem;
+}
+
+.margin_bottom {
+    margin-bottom: 2rem;
+}

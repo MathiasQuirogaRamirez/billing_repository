@@ -9,6 +9,8 @@ let container_customer_list;
 //container invoices HTML
 let container_invoices;
 let container_invoices_list;
+//new invoice customer
+let new_invoice_customer;
 
 /*********************
 CLASES               *            
@@ -42,6 +44,18 @@ class Company {
     deleteCustomer(customer) {
         this.customers.remove(customer);
         console.log(this.customers.toString());
+    }
+
+    addInvoice(invoice) {  
+        if (this.invoices === null) {
+            this.invoices = [];
+        }                    
+        this.invoices.push(invoice);
+    }
+
+    deleteInvoice(invoice) {
+        this.invoices.remove(invoice);
+        console.log(this.invoices.toString());
     }
 
     createInvoice () {
@@ -192,7 +206,7 @@ const singInResponse = (id, password) => {
             company.password = found.password;
             company.freelance = found.freelance;
             company.customers = get_customers(company.id);
-            company.invoices = found.invoices;
+            company.invoices = get_invoices(company.id);
             return company;
         }
     }
@@ -275,6 +289,26 @@ function singIn () {
             //invoices
             container_invoices.append(header_invoice);
             container_invoices.append(container_invoices_list);
+            //print invoices list in HTML
+            print_invoices(myCompany.invoices, 'null');
+            let btn_new_invoice = document.getElementById("btn_new_invoice");
+            let btn_list_invoice = document.getElementById("btn_list_invoice");
+
+            btn_new_invoice.addEventListener("click", () => {
+                container_invoices.removeChild(container_invoices_list);
+                createInvoice();
+                container_invoices.append(container_invoices_list);
+            });
+
+            btn_list_invoice.addEventListener("click", () => {
+                if (btn_list_invoice.getAttribute('src') === 'assets/chevron_up.png') {
+                    btn_list_invoice.src="assets/chevron.png";
+                  container_invoices.removeChild(container_invoices_list);
+                } else {
+                    btn_list_invoice.src="assets/chevron_up.png";
+                    container_invoices.append(container_invoices_list);
+                }
+            });
 
         } else
             alert ("Incorrect document or password");
@@ -340,6 +374,29 @@ function createCustomer () {
 }
 
 /***************************************************************
+CREATE INVOICE
+****************************************************************/
+function createInvoice () {
+    container_invoices.append(new_invoice);
+    let btn_save_invoice = document.getElementById("button_add_invoice");
+    let btn_cancel_invoice = document.getElementById("button_cancel_invoice");
+
+    //editar (pendiente)
+    btn_save_invoice.addEventListener("click", () => {
+        let invoice = new Invoice (document.getElementById("invoice_id").value, document.getElementById("invoice_date").value,
+        new_invoice_customer);
+        myCompany.addInvoice(invoice);
+        print_invoices('null', invoice);
+        reloadCompany();
+        container_invoices.removeChild(new_invoice);
+    });
+
+    btn_cancel_invoice.addEventListener("click", () => {
+        container_invoices.removeChild(new_invoice);
+    });
+}
+
+/***************************************************************
 SAVE LIST CUSTOMERS IN STORAGE
 ****************************************************************/
 const set_customers = (customers) => {
@@ -356,6 +413,22 @@ const get_customers = (id) => {
 };
 
 /***************************************************************
+SAVE LIST INVOICES IN STORAGE
+****************************************************************/
+const set_invoices = (invoices) => {
+    localStorage.setItem(`${myCompany.id}_invoices`, JSON.stringify(invoices));
+};
+
+/***************************************************************
+GET LIST INVOICES FROM STORAGE
+****************************************************************/
+const get_invoices = (id) => {
+    let invoices = localStorage.getItem(`${id}_invoices`);
+    invoices = JSON.parse (invoices);
+    return invoices;
+};
+
+/***************************************************************
 CUSTOMER ADD / CUSTOMER LIST (HTML)
 ****************************************************************/
 const print_customers = (customers, customer) => {
@@ -365,7 +438,7 @@ const print_customers = (customers, customer) => {
         if(customers !== null) {
             customers.forEach(item => {
                 const list = document.createElement("div");
-                list.className = "row border-bottom border-primary";
+                list.className = "row border-bottom border-primary padding_list";
                 list.innerHTML = `
                 <img src="assets/customer.png" alt="customer icon">
                 
@@ -397,7 +470,7 @@ const print_customers = (customers, customer) => {
     } else {
         console.log("entra add");
         const list = document.createElement("div");
-        list.className = "row border-bottom border-primary";
+        list.className = "row border-bottom border-primary padding_list";
         list.innerHTML = `
         <img src="assets/customer.png" alt="customer icon">
         
@@ -432,12 +505,12 @@ INVOICE ADD / INVOICE LIST (HTML)
 ****************************************************************/
 const print_invoices = (invoices, invoice) => {
 
-    if(invoices === 'null') {
+    if(invoice === 'null') {
         console.log("entra null (lista)");
         if(invoices !== null) {
             invoices.forEach(item => {
                 const list = document.createElement("div");
-                list.className = "row border-bottom border-primary";
+                list.className = "row border-bottom border-primary padding_list";
                 list.innerHTML = `
                 <img src="assets/invoice.png" alt="invoice icon">
                 
@@ -462,16 +535,16 @@ const print_invoices = (invoices, invoice) => {
                     let  invoices_copy = myCompany.invoices;
                     const found = invoices_copy.find((i) => i.id === item.id);
                     invoices_copy = invoices_copy.splice(invoices_copy.indexOf(found), 1);
-                    //set_customers(customers);
+                    set_invoices(invoices);
                 });
             });
         }
     } else {
         console.log("entra add");
         const list = document.createElement("div");
-        list.className = "row border-bottom border-primary";
+        list.className = "row border-bottom border-primary padding_list";
         list.innerHTML = `
-        <img src="assets/customer.png" alt="customer icon">
+        <img src="assets/invoice.png" alt="invoice icon">
         
         <div class="col-md-5 d-flex align-items-center">
             <div>
@@ -480,7 +553,7 @@ const print_invoices = (invoices, invoice) => {
             </div>
         </div>
         <div class="col-md-5 d-flex align-items-center">
-            <h6>${invoice.customer.name}</h6>
+            <h6>${item.customer.name}</h6>
         </div>
         <div class="d-flex align-items-center">
             <img id="${invoice.id}" src="assets/delete.png" height="32" alt="delete icon">
@@ -494,10 +567,32 @@ const print_invoices = (invoices, invoice) => {
                 let invoices_copy = myCompany.invoices;
                 const found = invoices_copy.find((i) => i.id === invoice.id);
                 invoices_copy = invoices_copy.splice(invoices_copy.indexOf(found), 1);
-                //set_customers(customers_copy);
+                set_invoices(invoices_copy);
         });
     }
 };
+
+/***************************************************************
+SEARCH CUSTOMER FOR NAME WHEN CREATE INVOICE
+****************************************************************/
+function searchingCustomer() {
+    let input_text = document.getElementById("invoice_customer");
+    input_text = input_text.value.toLowerCase();
+    let customers = myCompany.customers;
+    
+    if (input_text === "")
+        document.getElementById("invoice_customer_found").value = "";
+    else {
+        document.getElementById("invoice_customer_found").value = "";
+
+        customers.forEach(item => {
+            if (item.name.toLowerCase().startsWith(input_text)) {
+                document.getElementById("invoice_customer_found").value = item.name;
+                new_invoice_customer = item;
+            }
+        });
+    }
+}
 
 /***************************************************************
 RELOAD COMPANY IN STORAGE
@@ -513,6 +608,7 @@ function reloadCompany() {
         companies = [];
 
     set_customers(myCompany.customers);
+    set_invoices(myCompany.invoices)
     companies.push(myCompany);   
     localStorage.setItem("companies", JSON.stringify(companies));
 }
@@ -560,12 +656,6 @@ RUN PROGRAM          *
 
 //container HTML
 let container = document.getElementById("container");
-/*//container customer HTML
-container_customer = document.getElementById("container_customers");
-container_customer_list = document.getElementById("container_customers_list");
-//container invoices HTML
-container_invoices = document.getElementById("container_invoices");
-container_invoices_list = document.getElementById("container_invoices_list");*/
 
 //login and registre HTML
 const login_registre = document.createElement("div");
@@ -643,6 +733,7 @@ header_invoice.innerHTML = `
 
 //create new customer
 const new_customer = document.createElement("div");
+new_customer.className = "border-bottom margin_bottom"
 new_customer.innerHTML = `
 <!-- New customer -->
 <div class="row">        
@@ -651,13 +742,46 @@ new_customer.innerHTML = `
     <input type="text" class="form-control custom_container" id="customer_adress" aria-describedby="emailHelp" placeholder="Adress">
 </div>
 <!-- Button -->
-<div class="d-flex flex-row-reverse">
-    <button type="submit" class="btn btn-primary margin_icon" id="button_add_customer">Save</button>
-    <button type="cancel" class="btn btn-outline-primary" id="button_cancel_customer">Cancel</button>
+<div class="row">
+    <button type="cancel" class="btn btn-outline-primary custom_container" id="button_cancel_customer">Cancel</button>
+    <button type="submit" class="btn btn-primary custom_container" id="button_add_customer">Save</button>
 </div>
 `;
 
+//create new invoice
+const new_invoice = document.createElement("div");
+new_invoice.className = "container border-bottom margin_bottom";
+new_invoice.innerHTML = `
+    <h5>Invoice data</h5>
+    <div class="row">        
+        <input type="text" class="form-control custom_container col-md-5" id="invoice_id" aria-describedby="emailHelp" placeholder="Number">
+        <input type="text" class="form-control custom_container col-md-5" id="invoice_date" aria-describedby="emailHelp" placeholder="Date">
+    </div>
 
+    <div class="row">
+        <input class="form-control custom_container col-md-5" id="invoice_customer" type="search" onkeyup="searchingCustomer()" placeholder="Customer name" aria-label="Search">
+        <input class="form-control custom_container col-md-5" id="invoice_customer_found" readonly>
+    </div>
+
+    <h5>Products or services</h5>
+    <div class="row">
+        <input type="text" class="form-control custom_container col-md-5" id="item_name_invoice" aria-describedby="emailHelp" placeholder="Name">
+        <input type="text" class="form-control custom_container col-md-5" id="item_description_invoice" aria-describedby="emailHelp" placeholder="Description">
+    </div>
+    <div class="row">
+        <input type="text" class="form-control custom_container col-md-1" id="item_quantity_invoice" aria-describedby="emailHelp" placeholder="Quantity">
+        <input type="text" class="form-control custom_container col-md-2" id="item_base_invoice" aria-describedby="emailHelp" placeholder="Base">
+        <input type="text" class="form-control custom_container col-md-1" id="item_iva_invoice" aria-describedby="emailHelp" placeholder="IVA">
+        <div class="d-flex align-items-center col-md-1">
+            <img id="btn_new_item" src="assets/check.png" height="32" alt="more icon">
+        </div>
+    </div>
+
+    <div class="row">
+        <button type="cancel" class="btn btn-outline-primary custom_container" id="button_cancel_invoice">Cancel</button>
+        <button type="submit" class="btn btn-primary custom_container" id="button_add_invoice">Save</button>
+    </div>
+`;
 
 //add to container (default)
 container.append(login_registre);
